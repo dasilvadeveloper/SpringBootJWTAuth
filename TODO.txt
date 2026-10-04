@@ -1,0 +1,46 @@
+JWTAuth - o que falta fazer
+Estado em 2026-10-04: compila; o login valida username/password mas ainda nao emite token.
+Referencia: o projeto budget-planner-api (branch release/v0.1.0) tem tudo isto ja implementado.
+
+
+1. JWT (o objetivo do projeto, ainda por fazer)
+   - Adicionar a dependencia com.auth0:java-jwt ao pom.xml.
+   - Criar o UserAuthProvider: createToken (issuer fixo, username como subject, expiracao)
+     e validateToken.
+   - Ler o segredo de security.jwt.token.secret=${JWT_SECRET}, sem valor por omissao,
+     e falhar o arranque se faltar ou tiver menos de 32 bytes.
+   - AuthController.login: preencher o token no UserLoginDto (tem la o TODO).
+   - Criar o JwtAuthFilter (le o cabecalho Authorization: Bearer) e regista-lo no SecurityConfig.
+   - SecurityConfig: sessoes STATELESS e um AuthenticationEntryPoint que responda 401 em JSON
+     (hoje um pedido sem autenticacao recebe o 403 por omissao do Spring).
+
+2. Bug no AuthService
+   - DUMMY_BCRYPT_HASH = "$2a$10$......" nao e um hash BCrypt valido: o matches() devolve false
+     de imediato, por isso o tempo de resposta continua a revelar se o utilizador existe.
+     Gerar um hash real no arranque (passwordEncoder.encode de um valor aleatorio, em @PostConstruct).
+
+3. Validacao e erros
+   - CredentialsDto sem validacao: adicionar @NotBlank / @NotEmpty / @Size e @Valid no controller.
+   - RestExceptionHandler: erros do proprio Spring (body invalido, 404, 405, 415) caem no handler
+     generico e saem como 500 E01. Estender ResponseEntityExceptionHandler e mapear os status.
+   - ErrorCode so tem E01 e E02: faltam token invalido, pedido invalido, autenticacao necessaria, etc.
+   - O handler de AppException faz log da stack trace inteira em nivel info; basta o codigo.
+
+4. Base de dados
+   - spring.jpa.hibernate.ddl-auto=update: trocar por migracoes Flyway (spring-boot-starter-flyway)
+     e ddl-auto=validate.
+   - URL fixo em jdbc:postgresql://localhost:5432/test-database: passar para ${DB_URL:...}.
+   - Entidade User: as colunas nao tem nullable = false; o campo password devia chamar-se passwordHash.
+   - Nao ha forma de criar utilizadores (nem seeder de dev, nem endpoint de registo).
+
+5. Testes
+   - So existe o contextLoads. Faltam testes do login (valido, password errada, utilizador
+     inexistente, body invalido) e do filtro JWT.
+   - Os testes correm contra a base de dados de desenvolvimento; criar um profile de testes.
+
+6. Arrumacao
+   - AuthController: @RequiredArgsConstructor nao faz nada (a injecao e por @Autowired); remover.
+   - PasswordConfig: import de Component nao usado.
+   - Sem CORS configurado (necessario se houver um frontend noutra origem).
+   - Sem README (como correr, variaveis de ambiente: DB_PASSWORD, DB_USERNAME, JWT_SECRET).
+   - Pastas vazias src/main/resources/static e templates podem ser apagadas.
