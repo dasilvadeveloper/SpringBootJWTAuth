@@ -1,6 +1,5 @@
 JWTAuth - o que falta fazer
 Estado em 2026-10-04: compila; o login valida username/password mas ainda nao emite token.
-Referencia: o projeto budget-planner-api (branch release/v0.1.0) tem tudo isto ja implementado.
 
 
 1. JWT (o objetivo do projeto, ainda por fazer)
